@@ -52,7 +52,7 @@ axs[1,1].set_xlabel("Perimeter")
 axs[1,1].set_ylabel("Extent")
 
 plt.tight_layout()
-plt.show()
+#plt.show()
 
 #normalizing the dataset
 
@@ -87,9 +87,23 @@ def CreateModel() :
 
     inputs= keras.Input(shape=(2,))
     outputs = keras.layers.Dense(units=1,activation="sigmoid")(inputs)
-    model= keras.Model(inputs=inputs,outputs=outputs)
+    Model= keras.Model(inputs=inputs,outputs=outputs)
     metric = [keras.metrics.binary_accuracy,keras.metrics.Precision,keras.metrics.Recall,keras.metrics.AUC]
-    model.compile(optimizer=keras.optimizers.SGD(learning_rate=0.01),loss="binary_crossentropy",metrics=metric)
+    Model.compile(optimizer=keras.optimizers.SGD(learning_rate=1.0),loss="binary_crossentropy",metrics=metric)
+    
+    return Model
+
+def TrainModel( model,Feature_dataframe:pd.DataFrame,Label_dataframe:pd.DataFrame,BatchSize,epoch,Features=[]) :
+              inside = Feature_dataframe[Features].values
+              Encoder= encode()
+              classes = Encoder.fit_transform(Label_dataframe)
+              
+              Train = model.fit(x=inside,y=classes,batch_size=BatchSize,epochs=epoch)
+              epoch_history = Train.epoch
+              metric_hist = pd.DataFrame(Train.history)
+              return (epoch_history,metric_hist)
 
 
+model_1 = CreateModel()
 
+experiment_1 = TrainModel(model_1,Rice_x_train,Rice_y_train,50,50,["Area","Eccentricity"])
