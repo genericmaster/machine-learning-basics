@@ -26,31 +26,32 @@ Std_From_Mean= (Rice_Data["Perimeter"].max() -Rice_Data["Perimeter"].mean())/Ric
   
   
 # data visualisation
-fig1 =plt.figure().add_subplot(1,1,1)
-fig2 =plt.figure().add_subplot(1,1,1)
-fig3= plt.figure().add_subplot(1,1,1)
-fig4 =plt.figure().add_subplot(1,1,1)
+
 
 #class colouring
 Encoder =encode()
 Class_Encoder=Encoder.fit_transform(Rice_Data["Class"])
 
 #plots
-fig1.scatter(x=Rice_Data["Major_Axis_Length"],y=Rice_Data["Minor_Axis_Length"],c=Class_Encoder)
-fig1.set_xlabel("Major_Axis_Length")
-fig1.set_ylabel("Minor_Axis_Length")
+fig, axs = plt.subplots(2, 2, figsize=(10, 8))
 
-fig2.scatter(x=Rice_Data["Area"],y= Rice_Data["Eccentricity"],c=Class_Encoder)
-fig2.set_xlabel("Area")
-fig2.set_ylabel("Eccentricity")
+axs[0,0].scatter(Rice_Data["Major_Axis_Length"], Rice_Data["Minor_Axis_Length"], c=Class_Encoder)
+axs[0,0].set_xlabel("Major_Axis_Length")
+axs[0,0].set_ylabel("Minor_Axis_Length")
 
-fig3.scatter(x=Rice_Data["Convex_Area"],y=Rice_Data["Perimeter"],c=Class_Encoder)
-fig3.set_xlabel("Convex_Area")
-fig3.set_ylabel("Perimeter")
+axs[0,1].scatter(Rice_Data["Area"], Rice_Data["Eccentricity"], c=Class_Encoder)
+axs[0,1].set_xlabel("Area")
+axs[0,1].set_ylabel("Eccentricity")
 
-fig4.scatter(x=Rice_Data["Perimeter"],y=Rice_Data['Extent'],c=Class_Encoder)
-fig4.set_xlabel("Perimeter")
-fig4.set_ylabel("Extent")
+axs[1,0].scatter(Rice_Data["Convex_Area"], Rice_Data["Perimeter"], c=Class_Encoder)
+axs[1,0].set_xlabel("Convex_Area")
+axs[1,0].set_ylabel("Perimeter")
+
+axs[1,1].scatter(Rice_Data["Perimeter"], Rice_Data["Extent"], c=Class_Encoder)
+axs[1,1].set_xlabel("Perimeter")
+axs[1,1].set_ylabel("Extent")
+
+plt.tight_layout()
 plt.show()
 
 #normalizing the dataset
