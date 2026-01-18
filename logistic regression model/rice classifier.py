@@ -81,4 +81,15 @@ Rice_x_train,Rice_x_validation,Rice_y_train,Rice_y_validation = sp.train_test_sp
 
 
 
+# creating the model
+
+def CreateModel() :
+
+    inputs= keras.Input(shape=(2,))
+    outputs = keras.layers.Dense(units=1,activation="sigmoid")(inputs)
+    model= keras.Model(inputs=inputs,outputs=outputs)
+    metric = [keras.metrics.binary_accuracy,keras.metrics.Precision,keras.metrics.Recall,keras.metrics.AUC]
+    model.compile(optimizer=keras.optimizers.SGD(learning_rate=0.01),loss="binary_crossentropy",metrics=metric)
+
+
 
