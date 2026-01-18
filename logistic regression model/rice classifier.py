@@ -23,21 +23,37 @@ Range = Rice_Data["Area"].max()-Rice_Data["Area"].min()
 Std_From_Mean= (Rice_Data["Perimeter"].max() -Rice_Data["Perimeter"].mean())/Rice_Data["Perimeter"].std()
 
 #print("Minumum Major_Axis_Length: ",Minimum,"\n","Maximum Major_Axis_Length :",Maximum,"\n","Area Range:",Range,"\n","perimeter Std_From_Mean :",Std_From_Mean)
+  
+  
+# data visualisation
+fig1 =plt.figure().add_subplot(1,1,1)
+fig2 =plt.figure().add_subplot(1,1,1)
+fig3= plt.figure().add_subplot(1,1,1)
+fig4 =plt.figure().add_subplot(1,1,1)
 
+#class colouring
+Encoder =encode()
+Class_Encoder=Encoder.fit_transform(Rice_Data["Class"])
 
-Multiplot = plt.figure()
+#plots
+fig1.scatter(x=Rice_Data["Major_Axis_Length"],y=Rice_Data["Minor_Axis_Length"],c=Class_Encoder)
+fig1.set_xlabel("Major_Axis_Length")
+fig1.set_ylabel("Minor_Axis_Length")
 
-#Multiplot.add_subplot(2,2,1).scatter(x=Rice_Data["Major_Axis_Length"],y=Rice_Data["Minor_Axis_Length"])
-#Multiplot.add_subplot(2,2,2).scatter(x=Rice_Data["Area"],y= Rice_Data["Eccentricity"])
-#Multiplot.add_subplot(2,2,3).scatter(x=Rice_Data["Convex_Area"],y=Rice_Data["Perimeter"])
-#Multiplot.add_subplot(2,2,4).scatter(x=Rice_Data["Perimeter"],y=Rice_Data['Extent'])
+fig2.scatter(x=Rice_Data["Area"],y= Rice_Data["Eccentricity"],c=Class_Encoder)
+fig2.set_xlabel("Area")
+fig2.set_ylabel("Eccentricity")
 
-#plt.show()
+fig3.scatter(x=Rice_Data["Convex_Area"],y=Rice_Data["Perimeter"],c=Class_Encoder)
+fig3.set_xlabel("Convex_Area")
+fig3.set_ylabel("Perimeter")
 
+fig4.scatter(x=Rice_Data["Perimeter"],y=Rice_Data['Extent'],c=Class_Encoder)
+fig4.set_xlabel("Perimeter")
+fig4.set_ylabel("Extent")
+plt.show()
 
 #normalizing the dataset
-
-#print(Rice_Data)
 
 def Norm(Rice_Data):
     
@@ -53,15 +69,8 @@ def Norm(Rice_Data):
 
 
 Normalized_Rice_Data = Norm(Rice_Data)
-#print(Normalized_Rice_Data)
-Encoder =encode()
-Class_Encoder=Encoder.fit_transform(Rice_Data["Class"])
-Multiplot.add_subplot(2,2,1).scatter(x=Rice_Data["Major_Axis_Length"],y=Rice_Data["Minor_Axis_Length"],c=Class_Encoder)
-Multiplot.add_subplot(2,2,2).scatter(x=Rice_Data["Area"],y= Rice_Data["Eccentricity"],c=Class_Encoder)
-Multiplot.add_subplot(2,2,3).scatter(x=Rice_Data["Convex_Area"],y=Rice_Data["Perimeter"],c=Class_Encoder)
-Multiplot.add_subplot(2,2,4).scatter(x=Rice_Data["Perimeter"],y=Rice_Data['Extent'],c=Class_Encoder)
-plt.show()
 
+#print(Normalized_Rice_Data)
 
 #splitting the data
 Helper = Normalized_Rice_Data.drop(columns="Class")
