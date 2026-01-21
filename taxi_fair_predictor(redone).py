@@ -52,7 +52,7 @@ experiment_1 = trainModel(Taxi_fare,"FIRST MODEL","FARE",50,20,model_1,['TRIP_MI
 
 #plotting
 y_pred=model_1.predict(Taxi_fare["TRIP_MILES"]).flatten()
-fig= plt.figure().add_subplot(1,1,1) 
+fig= plt.subplots(1,1,figsize=(10,8)) 
 line,= plt.plot([Taxi_fare["FARE"].min(),Taxi_fare["FARE"].max()],[Taxi_fare["FARE"].min(),Taxi_fare["FARE"].max()])
 fig.scatter(x=Taxi_fare["FARE"],y=y_pred,c="green")
 fig.add_line(line,)
