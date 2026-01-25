@@ -60,12 +60,15 @@ def CreateModel() :
     outputs = keras.layers.Dense(units=1,activation="sigmoid")(inputs)
     Model= keras.Model(inputs=inputs,outputs=outputs)
     metric = [keras.metrics.binary_accuracy,keras.metrics.Precision,keras.metrics.Recall,keras.metrics.AUC]
-    Model.compile(optimizer=keras.optimizers.SGD(learning_rate=0.05),loss="binary_crossentropy",metrics=metric)
+    Model.compile(optimizer=keras.optimizers.SGD(learning_rate=0.07),loss="binary_crossentropy",metrics=metric)
     
     return Model
 
 #Training the model
 def TrainModel( model,Feature_dataframe:pd.DataFrame,Label_dataframe:pd.DataFrame,BatchSize,epoch,Features=[]) :
+             
+             #logs
+           
               
              #early stopping
              Early_Stopping = keras.callbacks.EarlyStopping(
