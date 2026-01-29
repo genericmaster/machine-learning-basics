@@ -102,7 +102,7 @@ metrics =[keras.metrics.RootMeanSquaredError(name='rmse')]
 settings_2 = ml_edu.experiment.ExperimentSettings(
      learning_rate=0.001,
      batch_size=50,
-     number_epochs=20,
+     number_epochs=200,
      input_features=['TRIP_MILES',"TRIP_MINUTES"]
 )
 

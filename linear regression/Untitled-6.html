@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic Photo Dino World</title>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #050a00; font-family: 'Arial Black', sans-serif; }
+
+        .viewport { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+
+        /* PARALLAX JUNGLE */
+        .layer-bg {
+            position: absolute; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2000') center/cover;
+            z-index: 1; filter: brightness(0.5) blur(1px);
+            transition: transform 0.1s ease-out;
+        }
+
+        /* DINO POSITIONING & ANIMATION */
+        .dino-wrapper {
+            position: absolute; bottom: 10%; left: -500px; width: 500px;
+            z-index: 10; animation: walk 25s infinite linear;
+            cursor: pointer;
+        }
+
+        .real-dino {
+            width: 100%;
+            height: auto;
+            /* Subtle breathing effect */
+            animation: breathe 3s infinite ease-in-out;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+        }
+
+        /* DINO SHADOW ON GROUND */
+        .dino-shadow {
+            position: absolute; bottom: -20px; left: 15%; width: 70%; height: 40px;
+            background: rgba(0,0,0,0.6); border-radius: 50%;
+            filter: blur(15px); z-index: -1;
+        }
+
+        @keyframes walk {
+            0% { left: -550px; transform: scaleX(1); }
+            48% { transform: scaleX(1); }
+            50% { left: 100vw; transform: scaleX(-1); }
+            98% { transform: scaleX(-1); }
+            100% { left: -550px; }
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.02) rotate(1deg); }
+        }
+
+        /* SHAKE EFFECT */
+        .shake { animation: earthquake 0.5s ease-in-out; }
+        @keyframes earthquake {
+            0%, 100% { transform: translate(0,0); }
+            20% { transform: translate(-10px, 10px); }
+            40% { transform: translate(10px, -10px); }
+            60% { transform: translate(-10px, -10px); }
+            80% { transform: translate(10px, 10px); }
+        }
+
+        .ui-panel {
+            position: absolute; top: 40px; width: 100%; text-align: center;
+            z-index: 100; color: white; text-shadow: 2px 2px 10px #000; pointer-events: none;
+        }
+
+        button {
+            pointer-events: auto; padding: 15px 40px; font-size: 1.2rem;
+            background: #e67e22; border: none; color: white; cursor: pointer;
+            border-radius: 5px; font-weight: bold; transition: 0.3s;
+        }
+        button:hover { background: #d35400; transform: scale(1.05); }
+    </style>
+</head>
+<body id="main-body">
+
+    <div class="ui-panel">
+        <h1>JURASSIC ENCOUNTER</h1>
+        <button onclick="roar()">TRIGGER ROAR</button>
+    </div>
+
+    <div class="viewport">
+        <div class="layer-bg"></div>
+        
+        <div class="dino-wrapper" id="dino-box" onclick="roar()">
+            <img src="https://www.pngarts.com/files/1/Tyrannosaurus-Rex-PNG-Transparent-Image.png" class="real-dino" alt="Real T-Rex">
+            <div class="dino-shadow"></div>
+        </div>
+    </div>
+
+    <audio id="roar-snd" src="https://www.soundjay.com/nature/sounds/creature-roar-01.mp3"></audio>
+
+    <script>
+        function roar() {
+            const body = document.getElementById('main-body');
+            const audio = document.getElementById('roar-snd');
+
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+
+            body.classList.add('shake');
+            setTimeout(() => body.classList.remove('shake'), 500);
+        }
+
+        // Parallax Movement
+        document.addEventListener('mousemove', (e) => {
+            const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+            const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+            document.querySelector('.layer-bg').style.transform = `translate(${moveX}px, ${moveY}px) scale(1.1)`;
+        });
+    </script>
+</body>
+</html>

@@ -33,16 +33,11 @@ sns.pairplot(data=Plot_df,vars=['Area', 'Perimeter', 'Major_Axis_Length', 'Minor
 #plt.show()
 
 #normalizing the dataset
-def Norm(Rice_Data):
-    Rice_Data["Area"]= Rice_Data["Area"].apply(lambda x : (x-Rice_Data["Area"].min())/(Rice_Data["Area"].max()-Rice_Data["Area"].min()))
-    Rice_Data["Perimeter"]= Rice_Data["Perimeter"].apply(lambda x : (x-Rice_Data["Perimeter"].min())/(Rice_Data["Perimeter"].max()-Rice_Data["Perimeter"].min()))
-    Rice_Data["Major_Axis_Length"]= Rice_Data["Major_Axis_Length"].apply(lambda x : (x-Rice_Data["Major_Axis_Length"].min())/(Rice_Data["Major_Axis_Length"].max()-Rice_Data["Major_Axis_Length"].min()))
-    Rice_Data["Minor_Axis_Length"]= Rice_Data["Minor_Axis_Length"].apply(lambda x : (x-Rice_Data["Minor_Axis_Length"].min())/(Rice_Data["Minor_Axis_Length"].max()-Rice_Data["Minor_Axis_Length"].min()))
-    Rice_Data["Eccentricity"]= Rice_Data["Eccentricity"].apply(lambda x : (x-Rice_Data["Eccentricity"].min())/(Rice_Data["Eccentricity"].max()-Rice_Data["Eccentricity"].min()))
-    Rice_Data["Convex_Area"]= Rice_Data["Convex_Area"].apply(lambda x : (x-Rice_Data["Convex_Area"].min())/(Rice_Data["Convex_Area"].max()-Rice_Data["Convex_Area"].min()))
-    Rice_Data["Area"]= Rice_Data["Extent"].apply(lambda x : (x-Rice_Data["Extent"].min())/(Rice_Data["Extent"].max()-Rice_Data["Extent"].min()))
+def Norm(df:pd.DataFrame) :
+    for i in df.select_dtypes(include="number").columns:
+        df[i]=df[i].apply(lambda x: (x-df[i].min())/(df[i].max()-df[i].min()))
 
-    return Rice_Data
+    return df
 
 Normalized_Rice_Data = Norm(Rice_Data)
 
