@@ -1,8 +1,8 @@
 
-from kmean import assigncluster,dataset,distance,computeinertia,kmean,np
+from kmean import assigncluster,computeinertia,np
 
 
-def Kmean_centroid_selector(dataset,k):
+def Kmean_plus_plus_centroid_selector(dataset,k):
     #generate our intial centroid randomlyv and uniformly
     centroids =[]
     distance_matrix=[]
@@ -33,7 +33,7 @@ def Kmean_centroid_selector(dataset,k):
 def kmean_plus_plus(dataset,k,max_iter=50):
    inertia_list=[]
    for i in range(1,k):
-    Centroid_array=Kmean_centroid_selector(dataset,i)
+    Centroid_array=Kmean_plus_plus_centroid_selector(dataset,i)
     clusters = assigncluster(dataset,Centroid_array)
     centroids= np.zeros((i,2))
     for iterate in range (max_iter):
