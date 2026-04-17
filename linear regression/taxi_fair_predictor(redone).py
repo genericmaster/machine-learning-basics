@@ -3,14 +3,13 @@ import numpy as np
 import pandas as pd
 
 #machine learning
-import tensorflow as tf
 import keras 
 
 # data visualisation
 import matplotlib.pyplot as plt
 
 #dataset
-Taxi_fare = pd.read_csv("https://download.mlcc.google.com/mledu-datasets/chicago_taxi_train.csv")
+Taxi_fare = pd.read_csv(r"C:\Users\rakhi\Downloads\chicago_taxi_train.csv")
 numeric_features = Taxi_fare.select_dtypes(include=['float64', 'int64'])
 Taxi_fare= numeric_features
 

@@ -15,7 +15,9 @@ def Kmean_plus_plus_centroid_selector(dataset,k):
       centroid_array = np.array(centroids)
       square_difference_matrix = (dataset - centroid_array[i-1])**2
       distance_matrix.append(np.sqrt(np.sum(square_difference_matrix,axis=1)))
+      print(distance_matrix)
       temp=np.array(distance_matrix).T
+      print(temp)
       D_x= np.min(a=temp,axis=1)
       square_distance = D_x**2
       sum_distances = np.sum(square_distance)

@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-np.random.seed(312)
+np.random.seed(3)
 dataset=np.random.random_integers(low=0,high=1356,size=(5000,2))#5000 instances with 2 features
 
 #need a functon that  selects the centroid randomly and within the dataset

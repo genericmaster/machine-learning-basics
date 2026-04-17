@@ -38,4 +38,3 @@ def greedy_kmean_plus_plus(dataset,k,generator):
      
     return final_centroids
 
-print(greedy_kmean_plus_plus(dataset,10,10))

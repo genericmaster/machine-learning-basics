@@ -24,10 +24,10 @@ Taxi_data.describe()
 
 #data visualization
 #histogram
-#for i in Taxi_data.select_dtypes(include="number").columns:
-    #list[i]
-    #sns.histplot(data=Taxi_data,x=i)
-   # plt.show()
+for i in Taxi_data.select_dtypes(include="number").columns:
+    list[i]
+    sns.histplot(data=Taxi_data,x=i)
+    plt.show()
 
 #boxplots
 #for i in Taxi_data.select_dtypes(include="number").columns:

@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 #dataset
-Rice_Data = pd.read_csv(r"C:\Users\user\Downloads\Rice_Cammeo_Osmancik.csv")
+Rice_Data = pd.read_csv("https://download.mlcc.google.com/mledu-datasets/Rice_Cammeo_Osmancik.csv")
+print(Rice_Data)
 
 #data exploration
 Range = Rice_Data["Area"].max()-Rice_Data["Area"].min()
@@ -71,7 +72,7 @@ def TrainModel( model,Feature_dataframe:pd.DataFrame,Label_dataframe:pd.DataFram
                     patience=2,
                     mode= "auto" ,
                     min_delta=1e-4,      
-                    restore_best_weights=True          
+                    restore_best_weights=True       
              )
              
              #training 
@@ -91,7 +92,7 @@ model_1 = CreateModel()
 
 experiment_1 = TrainModel(model_1,Rice_x_train,Rice_y_train,50,500,['Area', 'Perimeter', 'Major_Axis_Length', 'Minor_Axis_Length','Eccentricity', 'Convex_Area', 'Extent'])
 
-#graph= testing_model.predict(Rice_x_test).flatten()
+#zgraph= testing_model.predict(Rice_x_test).flatten()
 #predicted = pd.DataFrame(graph,columns=['predicted_value'])
 #df= pd.concat([predicted,Rice_y_test],axis =1)
 #sns.scatterplot(y='Class',x='predicted_value', data=df,hue='Class' )
