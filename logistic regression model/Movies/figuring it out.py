@@ -10,7 +10,7 @@ import keras
 
 
 #read dataset
-Movies = pd.read_csv(r"C:\Users\user\Downloads\top_rated_movies.csv")
+Movies = pd.read_csv(r"C:\personal projects\Movie_Popularity_project\data\raw\top_rated_movies.csv")
 Movies.head(5)
 Movies.tail(5)
 Movies.dtypes
@@ -99,7 +99,7 @@ def trainModel(df:pd.DataFrame,features,label,model,batch_size,epoch):
             min_delta=1e-06,
             restore_best_weights=True
         )
-        inputs = df[features].values,
+        inputs = df[features].values
         outputs = label
         train = model.fit(x=inputs,y=outputs,validation_split=0.25,batch_size=batch_size,epochs=epoch,callbacks=[early_stopping])
 

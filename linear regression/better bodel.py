@@ -2,17 +2,18 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler as norm
 from sklearn.feature_selection import mutual_info_regression
 from sklearn.model_selection import train_test_split
 import keras
 
 #data extraction
-Taxi_data= pd.read_csv(r"C:\Users\user\Downloads\chicago_taxi_train (1).csv")
+Taxi_data= pd.read_csv("https://download.mlcc.google.com/mledu-datasets/chicago_taxi_train.csv")
 
 #data understanding
 Taxi_data.shape
 Taxi_data.head(10)
-Taxi_data.dtypes
+print(Taxi_data.dtypes)
 
 # sanity check
 Taxi_data.isna().sum().T
@@ -24,10 +25,10 @@ Taxi_data.describe()
 
 #data visualization
 #histogram
-for i in Taxi_data.select_dtypes(include="number").columns:
-    list[i]
-    sns.histplot(data=Taxi_data,x=i)
-    plt.show()
+#for i in Taxi_data.select_dtypes(include="number").columns:
+
+    #sns.histplot(data=Taxi_data,x=i)
+    #plt.show()
 
 #boxplots
 #for i in Taxi_data.select_dtypes(include="number").columns:
@@ -48,61 +49,63 @@ for i in Taxi_data.select_dtypes(include="number").columns:
 #plt.show()
 
 #information gain
+Taxi_data['speed'] = Taxi_data['TRIP_MILES'] / Taxi_data['TRIP_SECONDS'].replace(0, np.nan)
+
 for i in Taxi_data.select_dtypes(include='number').columns:
     if Taxi_data[i].isnull().any() :
         Taxi_data.fillna({i:Taxi_data[i].mean()},inplace=True)
 
 features= Taxi_data.select_dtypes(include="number").drop(columns=('FARE')).copy()
-info_gain=mutual_info_regression(X=features,y=Taxi_data['FARE'])
-pd.Series(data=info_gain,index=features.columns)
+info_gain=mutual_info_regression(X=Taxi_data[['speed']],y=Taxi_data['FARE'])
+print(info_gain)
+pd.Series(data=info_gain,index=Taxi_data[['speed']].columns)
 
 #dropping unnecesarry features
-Taxi_data = Taxi_data[['TRIP_SECONDS','TRIP_MILES','FARE','TIPS','TRIP_TOTAL']]
+Taxi_data = Taxi_data[['TRIP_SECONDS','TRIP_MILES','FARE','TIPS','TRIP_START_HOUR','speed']]
+#splitting data
+Temp_x,X_test,Temp_y,Y_test= train_test_split(Taxi_data.drop(columns=['TRIP_MILES','TRIP_SECONDS','FARE','TIPS','TRIP_START_HOUR']),Taxi_data["FARE"],test_size=0.2,shuffle=True,random_state=42)
+X_train,X_Val,Y_train,Y_val =train_test_split(Temp_x,Temp_y,test_size=0.25,shuffle=True,random_state=42)
 
 
 #Normalizing the dataset
-def Norm(df:pd.DataFrame) :
-    for i in df.select_dtypes(include="number").columns:
-        df[i]=df[i].apply(lambda x: (x-df[i].min())/(df[i].max()-df[i].min()))
-
-    return df
-    
-Norm(Taxi_data)
-#splitting data
-Temp_x,X_test,Temp_y,Y_test= train_test_split(Taxi_data.drop(columns=['FARE','TRIP_SECONDS','TIPS']),Taxi_data["FARE"],test_size=0.2,shuffle=True)
-X_train,X_Val,Y_train,Y_val =train_test_split(Temp_x,Temp_y,test_size=0.25,shuffle=True)
+normal= norm()
+normalizer = normal.fit(X=X_train)
+X_train = pd.DataFrame(normalizer.fit_transform(X_train),columns=X_train.columns)
+print(Y_train.describe())
+X_Val =  pd.DataFrame(normalizer.transform(X_Val),columns=X_train.columns)
+X_test = pd.DataFrame(normalizer.transform(X_test),columns=X_train.columns)
 
 
 def CreateModel():
     
-   Inputs=keras.Input(shape=(2,))
+   Inputs=keras.Input(shape=(1,))
    Outputs=keras.layers.Dense(units=1,activation="linear",kernel_initializer='glorot_uniform',bias_initializer='zeros')(Inputs)
    Model = keras.Model(inputs=Inputs,outputs=Outputs)
-   Model.compile(keras.optimizers.RMSprop(learning_rate=0.0003),loss=keras.losses.MeanSquaredError(),metrics=[keras.metrics.RootMeanSquaredError()])
+   Model.compile(keras.optimizers.RMSprop(learning_rate=0.005),loss=keras.losses.MeanSquaredError(),metrics=[keras.metrics.RootMeanSquaredError()])
 
    return Model
 
-def trainModel(df:pd.DataFrame,Label_name:str,Batch_size :int, Epoch:int,model:keras.Model,Feature_name=[]) :
+def trainModel(df:pd.DataFrame,Label_name:pd.Series,Batch_size :int, Epoch:int,model:keras.Model,Feature_name:list,x_val,y_val) :
                 early_stopping=keras.callbacks.EarlyStopping(
-                       monitor='val_root_mean_square',
+                       monitor='val_root_mean_squared_error',
                        patience= 2,
-                       mode= 'auto',
-                       min_delta= 1e-06,
+                       mode= 'min',
+                       min_delta= 0.001,
                        restore_best_weights=True
                 )
                        
-                label = df.values
+                label = Label_name.values
                 features=  df[Feature_name].values
-                train=model.fit(x=features,y=label,batch_size=Batch_size,epochs=Epoch,validation_data=(X_Val,Y_val),callbacks=[early_stopping])
+                train=model.fit(x=features,y=label,batch_size=Batch_size,epochs=Epoch,validation_data=(x_val,y_val),callbacks=[early_stopping])
                 metrics_history=pd.DataFrame(train.history)
                 metrics_history = metrics_history[['val_root_mean_squared_error','root_mean_squared_error']]
-                     
+        
                 return( model, metrics_history)
 
 
 model_1 = CreateModel()
 
-experiment_1,metric_hist = trainModel(X_train,Y_train,64,100,model_1,['TRIP_MILES','TRIP_TOTAL'])
+experiment_1,metric_hist = trainModel(X_train,Y_train,64,200,model_1,['TRIP_MILES'],X_Val,Y_val)
 
 plt.figure()
 plt.plot(metric_hist['val_root_mean_squared_error'],label='val_rmse')
