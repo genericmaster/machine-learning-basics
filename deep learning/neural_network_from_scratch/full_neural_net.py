@@ -1,84 +1,7 @@
 import numpy as np
 import math 
 np.random.seed(42)
-f' this script handles both foward and backpropagation so that the model actually learns from data'
-
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler as norm
-from sklearn.feature_selection import mutual_info_regression
-from sklearn.model_selection import train_test_split
-
-Taxi_data= pd.read_csv(r"C:\Users\rakhi\Downloads\chicago_taxi_train (1).csv")
-
-#data understanding
-Taxi_data.shape
-Taxi_data.head(10)
-print(Taxi_data.dtypes)
-
-# sanity check
-Taxi_data.isna().sum().T
-Taxi_data.duplicated().sum()#0 duplicates
-
-#EDA
-#descriptive stats
-Taxi_data.describe()
-
-#data visualization
-#histogram
-#for i in Taxi_data.select_dtypes(include="number").columns:
-
-    #sns.histplot(data=Taxi_data,x=i)
-    #plt.show()
-
-#boxplots
-#for i in Taxi_data.select_dtypes(include="number").columns:
-    #list[i]
-    #sns.boxplot(data=Taxi_data,x=i)
-    #plt.show()
-
-#scatterplot
-#for i in Taxi_data.select_dtypes(include="number").columns:
-    #list[i]
-    #sns.scatterplot(data=Taxi_data,x=i,y='FARE')#TRIP MILES TRIP SECONDS , TRIP TOTAL
-    #plt.show()
-
-
-#CORRELATION
-#corr=Taxi_data.corr(numeric_only=True)
-#sns.heatmap(corr,annot=True)
-#plt.show()
-
-#information gain
-Taxi_data['speed'] = Taxi_data['TRIP_MILES'] / Taxi_data['TRIP_SECONDS'].replace(0, np.nan)
-
-for i in Taxi_data.select_dtypes(include='number').columns:
-    if Taxi_data[i].isnull().any() :
-        Taxi_data.fillna({i:Taxi_data[i].mean()},inplace=True)
-
-features= Taxi_data.select_dtypes(include="number").drop(columns=('FARE')).copy()
-info_gain=mutual_info_regression(X=Taxi_data[['speed']],y=Taxi_data['FARE'])
-print(info_gain)
-pd.Series(data=info_gain,index=Taxi_data[['speed']].columns)
-
-#dropping unnecesarry features
-Taxi_data = Taxi_data[['TRIP_SECONDS','TRIP_MILES','FARE','TIPS','TRIP_START_HOUR','speed']]
-#splitting data
-Temp_x,X_test,Temp_y,Y_test= train_test_split(Taxi_data.drop(columns=['speed','TRIP_SECONDS','FARE','TIPS','TRIP_START_HOUR']),Taxi_data["FARE"],test_size=0.2,shuffle=True,random_state=42)
-X_train,X_Val,Y_train,Y_val =train_test_split(Temp_x,Temp_y,test_size=0.25,shuffle=True,random_state=42)
-
-
-#Normalizing the dataset
-normal= norm()
-normalizer = normal.fit(X=X_train)
-X_train = pd.DataFrame(normalizer.fit_transform(X_train),columns=X_train.columns)
-print(Y_train.describe())
-X_Val =  pd.DataFrame(normalizer.transform(X_Val),columns=X_train.columns)
-X_test = pd.DataFrame(normalizer.transform(X_test),columns=X_train.columns)
-
-
+f' this script handles both foward and backpropagation so that the model actually learns from data, added optimizers include sgd,momentum,rmsprop,adam'
 
 class Neural_net:
    def __init__(self,loss):
@@ -221,24 +144,37 @@ class Neural_net:
           else:
             raise ValueError("categorical_cross_entropy only requires inputs of 0 or 1")
          
-   def train(self,X,labels,loss,learning_rate=0.01,epoch =50,optimizer='sgd'):
+   def train(self,X,labels,learning_rate=0.01,epoch =50,optimizer='sgd'):
          loss_track =[]
          velocity_weight = [0]*len(self.add_layer_list)
          velocity_output_layer_weight=0
          velocity_output_layer_bias =0
          velocity_bias = [0]*len(self.add_layer_list)
+         velocity_weight_rmsprop =[0]*len(self.add_layer_list)
+         velocity_bias_rmsprop =  [0]*len(self.add_layer_list)
+         velocity_output_layer_weight_rmsprop=0
+         velocity_output_layer_bias_rmsprop=0
+         velocity_weight_adam = [0]*len(self.add_layer_list)
+         velocity_bias_adam =[0]*len(self.add_layer_list)
+         m_weight_adam =[0]*len(self.add_layer_list)
+         m_bias_adam =[0]*len(self.add_layer_list)
+         m_weight_output_layer_adam =0
+         m_bias_output_layer_adam =0
+         velocity_output_layer_weight_adam =0
+         velocity_output_layer_bias_adam =0
+         t=0
          
          for i in range(epoch):
+            t=t+1
             prediction = self.forward_prop(X)
             loss_value = self.loss_function(prediction,labels)
             
             loss_track.append(loss_value)
-            incoming_gradient,gradient,delta = self.output_layer.backward_output_layer(labels, loss)
+            incoming_gradient,gradient,delta = self.output_layer.backward_output_layer(labels, self.loss)
             output_delta = delta
             output_gradient = gradient
             gradient_descent =[]
-            
-            
+               
             for layer in reversed(self.add_layer_list):
                incoming_gradient,gradient,delta = layer.backward_prop(incoming_gradient)
                gradient_descent.append((layer, gradient,delta))
@@ -255,9 +191,28 @@ class Neural_net:
                bias = self.output_layer.bias_matrix
                bias = bias - learning_rate*np.sum(output_delta,axis=0,keepdims=True)
                self.output_layer.bias_matrix = bias
-             
-            
-            if optimizer == 'momentum':
+                      
+            if optimizer == 'rmsprop':
+               for index, (gradient, v_t,v_t_bias) in enumerate(zip(gradient_descent, velocity_weight_rmsprop,velocity_bias_rmsprop)):
+                  v_t = 0.9*v_t +(1-0.9)*(gradient[1]**2)
+                  v_t_bias =0.9*v_t_bias +(1-0.9)* (np.sum(gradient[2]**2, axis=0, keepdims=True))
+                  gradient[0].weight_matrix=gradient[0].weight_matrix - learning_rate * (gradient[1]/np.sqrt(v_t+1e-08))
+                  gradient[0].bias_matrix = gradient[0].bias_matrix - learning_rate*(np.sum(gradient[2], axis=0, keepdims=True)/np.sqrt(v_t_bias+1e-08))
+                  velocity_weight_rmsprop[index] = v_t
+                  velocity_bias_rmsprop[index]=v_t_bias
+                  
+               #update for output layer
+               weight=self.output_layer.weight_matrix
+               velo_t_rmsprop = 0.9*velocity_output_layer_weight_rmsprop+(1-0.9)*(output_gradient**2)
+               weight = weight - learning_rate*(output_gradient/np.sqrt(velo_t_rmsprop+1e-08))
+               self.output_layer.weight_matrix = weight
+               velocity_output_layer_weight_rmsprop=velo_t_rmsprop
+               bias = self.output_layer.bias_matrix
+               velo_t_bias_rmsprop = 0.9*velocity_output_layer_bias_rmsprop + (1-0.9)*np.sum(output_delta**2,axis=0,keepdims=True)
+               bias = bias - learning_rate*(np.sum(output_delta,axis=0,keepdims=True)/np.sqrt(velo_t_bias_rmsprop +1e-08))
+               self.output_layer.bias_matrix = bias
+               velocity_output_layer_bias_rmsprop=velo_t_bias_rmsprop
+            if optimizer == "momentum":
                for index, (gradient, v_t,v_t_bias) in enumerate(zip(gradient_descent, velocity_weight,velocity_bias)):
                   v_t = 0.9*v_t +(1-0.9)*gradient[1]
                   v_t_bias =0.9*v_t_bias +(1-0.9)* np.sum(gradient[2], axis=0, keepdims=True)
@@ -277,62 +232,50 @@ class Neural_net:
                bias = bias - learning_rate*velo_t_bias
                self.output_layer.bias_matrix = bias
                velocity_output_layer_bias=velo_t_bias
-              
+            if optimizer== 'adam':
+               
+               for index,(gradient,v_t_adam,v_t_adam_bias,m_t_adam,m_t_bias_adam) in enumerate (zip(gradient_descent,velocity_weight_adam,velocity_bias_adam,m_weight_adam,m_bias_adam)):
+                   #momentum
+                   m_t_adam = 0.9*m_t_adam +(1-0.9)*gradient[1]
+                   m_t_bias_adam =0.9*m_t_bias_adam +(1-0.9)* np.sum(gradient[2], axis=0, keepdims=True)
+                   m_weight_adam[index] = m_t_adam
+                   m_bias_adam[index]= m_t_bias_adam
+                   
+                  #rmsprop
+                   v_t_adam = 0.99*v_t_adam +(1-0.99)*(gradient[1]**2)
+                   v_t_adam_bias =0.99*v_t_adam_bias +(1-0.99)* (np.sum(gradient[2]**2, axis=0, keepdims=True))
+                   velocity_weight_adam[index] = v_t_adam
+                   velocity_bias_adam[index] = v_t_adam_bias
+                 #bias correction
+                   m_t_correction = m_t_adam/((1-(0.9**t)))
+                   m_t_bias_adam_corresction = m_t_bias_adam/((1-(0.9**t)))
+                   v_t_adam_correction = v_t_adam/((1-(0.99**t)))
+                   v_t_adam_bias_correction = v_t_adam_bias/((1-(0.99**t)))
+                   
+                 #weight update
+                   gradient[0].weight_matrix=gradient[0].weight_matrix - learning_rate *(m_t_correction/np.sqrt(v_t_adam_correction+1e-08))
+                   gradient[0].bias_matrix = gradient[0].bias_matrix - learning_rate*(m_t_bias_adam_corresction/np.sqrt(v_t_adam_bias_correction+1e-08))
+               
+               #output layer adam logic
+               weight=self.output_layer.weight_matrix
+               velocity_output_layer_weight_adam = 0.99*velocity_output_layer_weight_adam+(1-0.99)*(output_gradient**2)
+               m_weight_output_layer_adam = 0.9*m_weight_output_layer_adam+(1-0.9)*output_gradient
+               
+               bias = self.output_layer.bias_matrix
+               velocity_output_layer_bias_adam = 0.99*velocity_output_layer_bias_adam + (1-0.99)*np.sum(output_delta**2,axis=0,keepdims=True)
+               m_bias_output_layer_adam = 0.9*m_bias_output_layer_adam +(1-0.9)*np.sum(output_delta,axis=0,keepdims=True)
+               
+               #bias coreection output layer
+               velocity_output_layer_weight_adam_corr = velocity_output_layer_weight_adam/((1-(0.99**t)))
+               velocity_output_layer_bias_adam_corr = velocity_output_layer_bias_adam/((1-(0.99**t)))
+               m_weight_output_layer_adam_corr = m_weight_output_layer_adam/((1-(0.9**t)))
+               m_bias_output_layer_adam_corr = m_bias_output_layer_adam/((1-(0.9**t)))
+               
+              #weight update
+               weight= weight - learning_rate *(m_weight_output_layer_adam_corr/np.sqrt(velocity_output_layer_weight_adam_corr+1e-08))
+               bias = bias - learning_rate *(m_bias_output_layer_adam_corr/np.sqrt(velocity_output_layer_bias_adam_corr+1e-08))
+               self.output_layer.weight_matrix = weight
+               self.output_layer.bias_matrix = bias
+  
          return loss_track   
                
-Y_train =Y_train.values.reshape(-1,1)           
-            
-import matplotlib.pyplot as plt
-
-sgd_net = Neural_net(loss='mse')
-sgd_net.add_layer(neurons=16, features=1, activation='relu')
-sgd_net.add_layer(neurons=8, features=16, activation='relu')
-sgd_net.result_layer(neurons=1, features=8, activation='linear')
-sgd_loss = sgd_net.train(X=X_train, labels=Y_train, loss='mse', learning_rate=0.01, epoch=2000, optimizer='sgd')
-
-momentum_net = Neural_net(loss='mse')
-momentum_net.add_layer(neurons=16, features=1, activation='relu')
-momentum_net.add_layer(neurons=8, features=16, activation='relu')
-momentum_net.result_layer(neurons=1, features=8, activation='linear')
-momentum_loss = momentum_net.train(X=X_train, labels=Y_train, loss='mse', learning_rate=0.01, epoch=2000, optimizer='momentum')
-print(f'momentum:{momentum_loss} sgd: {sgd_loss}')
-plt.figure(figsize=(10, 6))
-plt.plot(sgd_loss, label='SGD')
-plt.plot(momentum_loss, label='Momentum')
-plt.xlabel('Epoch')
-plt.ylabel('MSE Loss')
-plt.title('SGD vs Momentum')
-plt.legend()
-plt.show()        
-            
-
-
-         
-         
-         
-
-
-         
-         
-          
-      
-            
-      
-         
-      
-            
-         
-
-            
-         
-      
-
-      
-
-         
-      
-      
-
-
-
-
