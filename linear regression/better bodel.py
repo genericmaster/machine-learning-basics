@@ -63,7 +63,7 @@ pd.Series(data=info_gain,index=Taxi_data[['speed']].columns)
 #dropping unnecesarry features
 Taxi_data = Taxi_data[['TRIP_SECONDS','TRIP_MILES','FARE','TIPS','TRIP_START_HOUR','speed']]
 #splitting data
-Temp_x,X_test,Temp_y,Y_test= train_test_split(Taxi_data.drop(columns=['TRIP_MILES','TRIP_SECONDS','FARE','TIPS','TRIP_START_HOUR']),Taxi_data["FARE"],test_size=0.2,shuffle=True,random_state=42)
+Temp_x,X_test,Temp_y,Y_test= train_test_split(Taxi_data.drop(columns=['speed','TRIP_SECONDS','FARE','TIPS','TRIP_START_HOUR']),Taxi_data["FARE"],test_size=0.2,shuffle=True,random_state=42)
 X_train,X_Val,Y_train,Y_val =train_test_split(Temp_x,Temp_y,test_size=0.25,shuffle=True,random_state=42)
 
 

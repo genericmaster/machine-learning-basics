@@ -2,14 +2,6 @@ import numpy as np
 import math 
  
 
-# this is a neural net with used for regression tasks mainly
-#  its mainly a feed foward one shot network so the only optimizer we will have is loss
-
-
-
-X = np.array([[1,2],[3,4],[5,6],[7,8]])
-y = np.array([[3],[7],[11],[15]])
-
 #facade design pattern
 class Feed_forward_net:
    def __init__(self,loss):
