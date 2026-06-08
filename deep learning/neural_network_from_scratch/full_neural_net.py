@@ -144,7 +144,7 @@ class Neural_net:
           else:
             raise ValueError("categorical_cross_entropy only requires inputs of 0 or 1")
          
-   def train(self,X,labels,learning_rate=0.01,epoch =50,optimizer='sgd'):
+   def train(self,X,labels,batch_size,learning_rate=0.01,epoch =50,optimizer='sgd'):
          loss_track =[]
          velocity_weight = [0]*len(self.add_layer_list)
          velocity_output_layer_weight=0
@@ -165,117 +165,120 @@ class Neural_net:
          t=0
          
          for i in range(epoch):
-            t=t+1
-            prediction = self.forward_prop(X)
-            loss_value = self.loss_function(prediction,labels)
-            
-            loss_track.append(loss_value)
-            incoming_gradient,gradient,delta = self.output_layer.backward_output_layer(labels, self.loss)
-            output_delta = delta
-            output_gradient = gradient
-            gradient_descent =[]
+            for batch in range(0,X.shape[0],batch_size):
+               X_batch= X[batch:batch+batch_size]
+               labels_batch = labels[batch:batch+batch_size]
+               t=t+1
+               prediction = self.forward_prop(X_batch)
+               loss_value = self.loss_function(prediction,labels_batch)
                
-            for layer in reversed(self.add_layer_list):
-               incoming_gradient,gradient,delta = layer.backward_prop(incoming_gradient)
-               gradient_descent.append((layer, gradient,delta))
-            
-            if optimizer =='sgd':   
-               for layer, gradient,delta in gradient_descent:
-                  layer.weight_matrix = layer.weight_matrix - learning_rate * gradient
-                  layer.bias_matrix = layer.bias_matrix - learning_rate * np.sum(delta, axis=0, keepdims=True)
-                                    
-            #update for output layer
-               weight=self.output_layer.weight_matrix
-               weight = weight - learning_rate*output_gradient
-               self.output_layer.weight_matrix = weight
-               bias = self.output_layer.bias_matrix
-               bias = bias - learning_rate*np.sum(output_delta,axis=0,keepdims=True)
-               self.output_layer.bias_matrix = bias
-                      
-            if optimizer == 'rmsprop':
-               for index, (gradient, v_t,v_t_bias) in enumerate(zip(gradient_descent, velocity_weight_rmsprop,velocity_bias_rmsprop)):
-                  v_t = 0.9*v_t +(1-0.9)*(gradient[1]**2)
-                  v_t_bias =0.9*v_t_bias +(1-0.9)* (np.sum(gradient[2]**2, axis=0, keepdims=True))
-                  gradient[0].weight_matrix=gradient[0].weight_matrix - learning_rate * (gradient[1]/np.sqrt(v_t+1e-08))
-                  gradient[0].bias_matrix = gradient[0].bias_matrix - learning_rate*(np.sum(gradient[2], axis=0, keepdims=True)/np.sqrt(v_t_bias+1e-08))
-                  velocity_weight_rmsprop[index] = v_t
-                  velocity_bias_rmsprop[index]=v_t_bias
+               loss_track.append(loss_value)
+               incoming_gradient,gradient,delta = self.output_layer.backward_output_layer(labels_batch, self.loss)
+               output_delta = delta
+               output_gradient = gradient
+               gradient_descent =[]
                   
+               for layer in reversed(self.add_layer_list):
+                  incoming_gradient,gradient,delta = layer.backward_prop(incoming_gradient)
+                  gradient_descent.append((layer, gradient,delta))
+               
+               if optimizer =='sgd':   
+                  for layer, gradient,delta in gradient_descent:
+                     layer.weight_matrix = layer.weight_matrix - learning_rate * gradient
+                     layer.bias_matrix = layer.bias_matrix - learning_rate * np.sum(delta, axis=0, keepdims=True)
+                                       
                #update for output layer
-               weight=self.output_layer.weight_matrix
-               velo_t_rmsprop = 0.9*velocity_output_layer_weight_rmsprop+(1-0.9)*(output_gradient**2)
-               weight = weight - learning_rate*(output_gradient/np.sqrt(velo_t_rmsprop+1e-08))
-               self.output_layer.weight_matrix = weight
-               velocity_output_layer_weight_rmsprop=velo_t_rmsprop
-               bias = self.output_layer.bias_matrix
-               velo_t_bias_rmsprop = 0.9*velocity_output_layer_bias_rmsprop + (1-0.9)*np.sum(output_delta**2,axis=0,keepdims=True)
-               bias = bias - learning_rate*(np.sum(output_delta,axis=0,keepdims=True)/np.sqrt(velo_t_bias_rmsprop +1e-08))
-               self.output_layer.bias_matrix = bias
-               velocity_output_layer_bias_rmsprop=velo_t_bias_rmsprop
-            if optimizer == "momentum":
-               for index, (gradient, v_t,v_t_bias) in enumerate(zip(gradient_descent, velocity_weight,velocity_bias)):
-                  v_t = 0.9*v_t +(1-0.9)*gradient[1]
-                  v_t_bias =0.9*v_t_bias +(1-0.9)* np.sum(gradient[2], axis=0, keepdims=True)
-                  gradient[0].weight_matrix=gradient[0].weight_matrix - learning_rate * v_t
-                  gradient[0].bias_matrix = gradient[0].bias_matrix - learning_rate*v_t_bias
-                  velocity_weight[index] = v_t
-                  velocity_bias[index]=v_t_bias
+                  weight=self.output_layer.weight_matrix
+                  weight = weight - learning_rate*output_gradient
+                  self.output_layer.weight_matrix = weight
+                  bias = self.output_layer.bias_matrix
+                  bias = bias - learning_rate*np.sum(output_delta,axis=0,keepdims=True)
+                  self.output_layer.bias_matrix = bias
+                        
+               if optimizer == 'rmsprop':
+                  for index, (gradient, v_t,v_t_bias) in enumerate(zip(gradient_descent, velocity_weight_rmsprop,velocity_bias_rmsprop)):
+                     v_t = 0.9*v_t +(1-0.9)*(gradient[1]**2)
+                     v_t_bias =0.9*v_t_bias +(1-0.9)* (np.sum(gradient[2]**2, axis=0, keepdims=True))
+                     gradient[0].weight_matrix=gradient[0].weight_matrix - learning_rate * (gradient[1]/np.sqrt(v_t+1e-08))
+                     gradient[0].bias_matrix = gradient[0].bias_matrix - learning_rate*(np.sum(gradient[2], axis=0, keepdims=True)/np.sqrt(v_t_bias+1e-08))
+                     velocity_weight_rmsprop[index] = v_t
+                     velocity_bias_rmsprop[index]=v_t_bias
+                     
+                  #update for output layer
+                  weight=self.output_layer.weight_matrix
+                  velo_t_rmsprop = 0.9*velocity_output_layer_weight_rmsprop+(1-0.9)*(output_gradient**2)
+                  weight = weight - learning_rate*(output_gradient/np.sqrt(velo_t_rmsprop+1e-08))
+                  self.output_layer.weight_matrix = weight
+                  velocity_output_layer_weight_rmsprop=velo_t_rmsprop
+                  bias = self.output_layer.bias_matrix
+                  velo_t_bias_rmsprop = 0.9*velocity_output_layer_bias_rmsprop + (1-0.9)*np.sum(output_delta**2,axis=0,keepdims=True)
+                  bias = bias - learning_rate*(np.sum(output_delta,axis=0,keepdims=True)/np.sqrt(velo_t_bias_rmsprop +1e-08))
+                  self.output_layer.bias_matrix = bias
+                  velocity_output_layer_bias_rmsprop=velo_t_bias_rmsprop
+               if optimizer == "momentum":
+                  for index, (gradient, v_t,v_t_bias) in enumerate(zip(gradient_descent, velocity_weight,velocity_bias)):
+                     v_t = 0.9*v_t +(1-0.9)*gradient[1]
+                     v_t_bias =0.9*v_t_bias +(1-0.9)* np.sum(gradient[2], axis=0, keepdims=True)
+                     gradient[0].weight_matrix=gradient[0].weight_matrix - learning_rate * v_t
+                     gradient[0].bias_matrix = gradient[0].bias_matrix - learning_rate*v_t_bias
+                     velocity_weight[index] = v_t
+                     velocity_bias[index]=v_t_bias
+                     
+                  #update for output layer
+                  weight=self.output_layer.weight_matrix
+                  velo_t = 0.9*velocity_output_layer_weight+(1-0.9)*output_gradient
+                  weight = weight - learning_rate*velo_t
+                  self.output_layer.weight_matrix = weight
+                  velocity_output_layer_weight=velo_t
+                  bias = self.output_layer.bias_matrix
+                  velo_t_bias = 0.9*velocity_output_layer_bias +(1-0.9)*np.sum(output_delta,axis=0,keepdims=True)
+                  bias = bias - learning_rate*velo_t_bias
+                  self.output_layer.bias_matrix = bias
+                  velocity_output_layer_bias=velo_t_bias
+               if optimizer== 'adam':
                   
-               #update for output layer
-               weight=self.output_layer.weight_matrix
-               velo_t = 0.9*velocity_output_layer_weight+(1-0.9)*output_gradient
-               weight = weight - learning_rate*velo_t
-               self.output_layer.weight_matrix = weight
-               velocity_output_layer_weight=velo_t
-               bias = self.output_layer.bias_matrix
-               velo_t_bias = 0.9*velocity_output_layer_bias +(1-0.9)*np.sum(output_delta,axis=0,keepdims=True)
-               bias = bias - learning_rate*velo_t_bias
-               self.output_layer.bias_matrix = bias
-               velocity_output_layer_bias=velo_t_bias
-            if optimizer== 'adam':
-               
-               for index,(gradient,v_t_adam,v_t_adam_bias,m_t_adam,m_t_bias_adam) in enumerate (zip(gradient_descent,velocity_weight_adam,velocity_bias_adam,m_weight_adam,m_bias_adam)):
-                   #momentum
-                   m_t_adam = 0.9*m_t_adam +(1-0.9)*gradient[1]
-                   m_t_bias_adam =0.9*m_t_bias_adam +(1-0.9)* np.sum(gradient[2], axis=0, keepdims=True)
-                   m_weight_adam[index] = m_t_adam
-                   m_bias_adam[index]= m_t_bias_adam
-                   
-                  #rmsprop
-                   v_t_adam = 0.99*v_t_adam +(1-0.99)*(gradient[1]**2)
-                   v_t_adam_bias =0.99*v_t_adam_bias +(1-0.99)* (np.sum(gradient[2]**2, axis=0, keepdims=True))
-                   velocity_weight_adam[index] = v_t_adam
-                   velocity_bias_adam[index] = v_t_adam_bias
-                 #bias correction
-                   m_t_correction = m_t_adam/((1-(0.9**t)))
-                   m_t_bias_adam_corresction = m_t_bias_adam/((1-(0.9**t)))
-                   v_t_adam_correction = v_t_adam/((1-(0.99**t)))
-                   v_t_adam_bias_correction = v_t_adam_bias/((1-(0.99**t)))
-                   
-                 #weight update
-                   gradient[0].weight_matrix=gradient[0].weight_matrix - learning_rate *(m_t_correction/np.sqrt(v_t_adam_correction+1e-08))
-                   gradient[0].bias_matrix = gradient[0].bias_matrix - learning_rate*(m_t_bias_adam_corresction/np.sqrt(v_t_adam_bias_correction+1e-08))
-               
-               #output layer adam logic
-               weight=self.output_layer.weight_matrix
-               velocity_output_layer_weight_adam = 0.99*velocity_output_layer_weight_adam+(1-0.99)*(output_gradient**2)
-               m_weight_output_layer_adam = 0.9*m_weight_output_layer_adam+(1-0.9)*output_gradient
-               
-               bias = self.output_layer.bias_matrix
-               velocity_output_layer_bias_adam = 0.99*velocity_output_layer_bias_adam + (1-0.99)*np.sum(output_delta**2,axis=0,keepdims=True)
-               m_bias_output_layer_adam = 0.9*m_bias_output_layer_adam +(1-0.9)*np.sum(output_delta,axis=0,keepdims=True)
-               
-               #bias coreection output layer
-               velocity_output_layer_weight_adam_corr = velocity_output_layer_weight_adam/((1-(0.99**t)))
-               velocity_output_layer_bias_adam_corr = velocity_output_layer_bias_adam/((1-(0.99**t)))
-               m_weight_output_layer_adam_corr = m_weight_output_layer_adam/((1-(0.9**t)))
-               m_bias_output_layer_adam_corr = m_bias_output_layer_adam/((1-(0.9**t)))
-               
-              #weight update
-               weight= weight - learning_rate *(m_weight_output_layer_adam_corr/np.sqrt(velocity_output_layer_weight_adam_corr+1e-08))
-               bias = bias - learning_rate *(m_bias_output_layer_adam_corr/np.sqrt(velocity_output_layer_bias_adam_corr+1e-08))
-               self.output_layer.weight_matrix = weight
-               self.output_layer.bias_matrix = bias
-  
+                  for index,(gradient,v_t_adam,v_t_adam_bias,m_t_adam,m_t_bias_adam) in enumerate (zip(gradient_descent,velocity_weight_adam,velocity_bias_adam,m_weight_adam,m_bias_adam)):
+                     #momentum
+                     m_t_adam = 0.9*m_t_adam +(1-0.9)*gradient[1]
+                     m_t_bias_adam =0.9*m_t_bias_adam +(1-0.9)* np.sum(gradient[2], axis=0, keepdims=True)
+                     m_weight_adam[index] = m_t_adam
+                     m_bias_adam[index]= m_t_bias_adam
+                     
+                     #rmsprop
+                     v_t_adam = 0.99*v_t_adam +(1-0.99)*(gradient[1]**2)
+                     v_t_adam_bias =0.99*v_t_adam_bias +(1-0.99)* (np.sum(gradient[2]**2, axis=0, keepdims=True))
+                     velocity_weight_adam[index] = v_t_adam
+                     velocity_bias_adam[index] = v_t_adam_bias
+                  #bias correction
+                     m_t_correction = m_t_adam/((1-(0.9**t)))
+                     m_t_bias_adam_corresction = m_t_bias_adam/((1-(0.9**t)))
+                     v_t_adam_correction = v_t_adam/((1-(0.99**t)))
+                     v_t_adam_bias_correction = v_t_adam_bias/((1-(0.99**t)))
+                     
+                  #weight update
+                     gradient[0].weight_matrix=gradient[0].weight_matrix - learning_rate *(m_t_correction/np.sqrt(v_t_adam_correction+1e-08))
+                     gradient[0].bias_matrix = gradient[0].bias_matrix - learning_rate*(m_t_bias_adam_corresction/np.sqrt(v_t_adam_bias_correction+1e-08))
+                  
+                  #output layer adam logic
+                  weight=self.output_layer.weight_matrix
+                  velocity_output_layer_weight_adam = 0.99*velocity_output_layer_weight_adam+(1-0.99)*(output_gradient**2)
+                  m_weight_output_layer_adam = 0.9*m_weight_output_layer_adam+(1-0.9)*output_gradient
+                  
+                  bias = self.output_layer.bias_matrix
+                  velocity_output_layer_bias_adam = 0.99*velocity_output_layer_bias_adam + (1-0.99)*np.sum(output_delta**2,axis=0,keepdims=True)
+                  m_bias_output_layer_adam = 0.9*m_bias_output_layer_adam +(1-0.9)*np.sum(output_delta,axis=0,keepdims=True)
+                  
+                  #bias coreection output layer
+                  velocity_output_layer_weight_adam_corr = velocity_output_layer_weight_adam/((1-(0.99**t)))
+                  velocity_output_layer_bias_adam_corr = velocity_output_layer_bias_adam/((1-(0.99**t)))
+                  m_weight_output_layer_adam_corr = m_weight_output_layer_adam/((1-(0.9**t)))
+                  m_bias_output_layer_adam_corr = m_bias_output_layer_adam/((1-(0.9**t)))
+                  
+               #weight update
+                  weight= weight - learning_rate *(m_weight_output_layer_adam_corr/np.sqrt(velocity_output_layer_weight_adam_corr+1e-08))
+                  bias = bias - learning_rate *(m_bias_output_layer_adam_corr/np.sqrt(velocity_output_layer_bias_adam_corr+1e-08))
+                  self.output_layer.weight_matrix = weight
+                  self.output_layer.bias_matrix = bias
+   
          return loss_track   
-               
+                  
